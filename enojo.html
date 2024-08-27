@@ -11,7 +11,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0; /* Color de fondo opcional */
+            background-color: #ddd9d4; /* Color de fondo opcional */
         }
         .container {
             text-align: center;
@@ -31,7 +31,6 @@
             width: 70px; /* Ajustar según el tamaño de la imagen */
             height: 70px; /* Ajustar según el tamaño de la imagen */
             position: absolute;
-
             transform: translateY(-50%);
         }
         input[type="number"] {
@@ -60,23 +59,57 @@
 <body>
     <div class="container">
         <div class="progress-container">
-            <img src="./stitch.png" alt="" class="progress-point" id="progress-point">
+            <img src="/stitch.png" alt="" class="progress-point" id="progress-point">
         </div>
         <input type="number" id="progress-input" min="0" max="100" placeholder="Ingrese un valor (0-100)">
         <button onclick="updateProgress()">Actualizar Progreso</button>
     </div>
-
     <script>
-        function updateProgress() {
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function updateProgress() {
             const progressPoint = document.getElementById('progress-point');
             const progressInput = document.getElementById('progress-input');
             const value = progressInput.value;
 
             if (value >= 0 && value <= 100) {
-                const containerWidth = document.querySelector('.progress-container').offsetWidth;
-                const pointWidth = progressPoint.offsetWidth;
-                const newPosition = (containerWidth - pointWidth) * (value / 100);
-                progressPoint.style.left = newPosition + 'px';
+                try {
+                    const authData = JSON.parse(getCookie('authData'));
+                    if (authData && authData.record.id === 'n8mk5r8sytp8ms3') {
+                        // Simulate a server request to update progress
+                        const response = await fetch('http://127.0.0.1:8090/api/update-progress', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ progress: value })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Error al actualizar el progreso en el servidor');
+                        }
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            const containerWidth = document.querySelector('.progress-container').offsetWidth;
+                            const pointWidth = progressPoint.offsetWidth;
+                            const newPosition = (containerWidth - pointWidth) * (value / 100);
+                            progressPoint.style.left = newPosition + 'px';
+                        } else {
+                            alert('Error al actualizar el progreso.');
+                        }
+                    } else {
+                        alert('Solo el usuario autorizado puede actualizar el progreso.');
+                    }
+                } catch (error) {
+                    console.error('Error al actualizar el progreso:', error);
+                    alert('Hubo un error al intentar actualizar el progreso.');
+                }
             } else {
                 alert('Por favor, ingrese un valor entre 0 y 100.');
             }
